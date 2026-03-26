@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   FileText,
-  PenSquare,
   Image,
   Settings,
   BookOpen,
@@ -93,19 +92,6 @@ export default function Sidebar() {
           })}
         </div>
       </nav>
-
-      {/* Bottom new post button */}
-      <div className="mt-auto px-3 w-full">
-        <Link
-          href="/posts/new"
-          className="flex items-center justify-center gap-3 w-full py-3 rounded-lg bg-gradient-to-br from-primary to-primary-container text-on-primary font-semibold text-sm transition-opacity hover:opacity-90"
-        >
-          <PenSquare size={16} className="min-w-[16px]" />
-          <span className="opacity-100 whitespace-nowrap text-xs">
-            New Post
-          </span>
-        </Link>
-      </div>
     </aside>
   );
 }
