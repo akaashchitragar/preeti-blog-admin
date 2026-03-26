@@ -4,6 +4,23 @@ import { useState, useCallback, useRef } from "react";
 import dynamic from "next/dynamic";
 import AiToolsPanel from "./ai-tools-panel";
 import { slugify, estimateReadingTime } from "@/lib/utils";
+
+function extractExcerpt(content: string): string {
+  if (!content) return "";
+  try {
+    const blocks = JSON.parse(content);
+    if (!Array.isArray(blocks)) return content.substring(0, 200);
+    const text = blocks
+      .flatMap((b: any) => b.content ?? [])
+      .filter((i: any) => i.type === "text")
+      .map((i: any) => i.text)
+      .join(" ")
+      .trim();
+    return text.substring(0, 200);
+  } catch {
+    return content.substring(0, 200);
+  }
+}
 import { useRouter } from "next/navigation";
 
 // BlockNote must be loaded client-side only (uses browser APIs)
@@ -78,7 +95,7 @@ export default function PostEditorClient({ initialData }: PostEditorClientProps)
       status: overrideStatus ?? status,
       featured,
       readingTime,
-      excerpt: content ? content.substring(0, 200).replace(/[#*[\]]/g, "") : "",
+      excerpt: extractExcerpt(content),
     };
 
     try {

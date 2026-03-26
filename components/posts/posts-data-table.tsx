@@ -27,6 +27,16 @@ import {
 import { IPost } from "@/lib/models/post";
 import { formatDate } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const helper = createColumnHelper<IPost>();
 
@@ -57,21 +67,23 @@ export default function PostsDataTable({ posts, showPagination = true }: PostsDa
   const [statusFilter, setStatusFilter] = useState("All");
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<IPost | null>(null);
   const [, startTransition] = useTransition();
 
-  const handleDelete = useCallback(async (post: IPost) => {
-    if (!confirm(`Delete "${post.title}"? This cannot be undone.`)) return;
-    setDeletingId(post._id);
+  const confirmDelete = useCallback(async () => {
+    if (!pendingDelete) return;
+    setDeletingId(pendingDelete._id);
     try {
-      const res = await fetch(`/api/posts/${post.slug}`, { method: "DELETE" });
+      const res = await fetch(`/api/posts/${pendingDelete.slug}`, { method: "DELETE" });
       if (res.ok) {
-        setData((prev) => prev.filter((p) => p._id !== post._id));
+        setData((prev) => prev.filter((p) => p._id !== pendingDelete._id));
         startTransition(() => router.refresh());
       }
     } finally {
       setDeletingId(null);
+      setPendingDelete(null);
     }
-  }, [router]);
+  }, [pendingDelete, router]);
 
   const columns = [
     helper.accessor("title", {
@@ -162,7 +174,7 @@ export default function PostsDataTable({ posts, showPagination = true }: PostsDa
               <Edit size={15} />
             </Link>
             <button
-              onClick={() => handleDelete(post)}
+              onClick={() => setPendingDelete(post)}
               disabled={deletingId === post._id}
               className="p-2 rounded-lg text-on-surface-variant hover:text-error hover:bg-white transition-all disabled:opacity-40"
             >
@@ -196,6 +208,7 @@ export default function PostsDataTable({ posts, showPagination = true }: PostsDa
   });
 
   return (
+    <>
     <div className="space-y-4">
       {/* Toolbar */}
       <div className="bg-surface-container-low p-3 rounded-2xl flex flex-wrap items-center gap-3">
@@ -308,6 +321,30 @@ export default function PostsDataTable({ posts, showPagination = true }: PostsDa
         )}
       </div>
     </div>
+
+    {/* Delete confirmation dialog */}
+
+    <AlertDialog open={!!pendingDelete} onOpenChange={(open) => { if (!open) setPendingDelete(null); }}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete post?</AlertDialogTitle>
+          <AlertDialogDescription>
+            <span className="font-semibold text-on-surface">&ldquo;{pendingDelete?.title}&rdquo;</span>
+            {" "}will be permanently deleted. This cannot be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={confirmDelete}
+            className="bg-error text-on-error hover:bg-error/90"
+          >
+            {deletingId ? "Deleting..." : "Delete"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
 
