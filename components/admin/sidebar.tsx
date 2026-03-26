@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard,
   FileText,
   PenSquare,
   Image,
@@ -13,7 +12,6 @@ import {
 import { cn } from "@/lib/utils";
 
 const navLinks = [
-  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Posts", href: "/posts", icon: FileText },
   { label: "New Post", href: "/posts/new", icon: PenSquare },
   { label: "Media", href: "/media", icon: Image },
