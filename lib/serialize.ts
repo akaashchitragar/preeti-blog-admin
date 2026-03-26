@@ -16,7 +16,6 @@ export function serializePost(post: any): IPost {
       ? post.publishedAt.toISOString() as unknown as Date
       : post.publishedAt ?? new Date().toISOString() as unknown as Date,
     readingTime: post.readingTime ?? 5,
-    featured: post.featured ?? false,
     status: post.status ?? "draft",
     views: post.views ?? 0,
   };

@@ -1,8 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Bell, Search, PenSquare, Sparkles } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { Search, PenSquare, LogOut, AlertCircle, X } from "lucide-react";
 
 const pageTitles: Record<string, string> = {
   "/dashboard": "Dashboard",
@@ -14,6 +15,15 @@ const pageTitles: Record<string, string> = {
 
 export default function Topbar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  async function confirmLogout() {
+    setIsLoggingOut(true);
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.push("/login");
+  }
 
   const title =
     Object.entries(pageTitles).find(([path]) =>
@@ -39,31 +49,57 @@ export default function Topbar() {
         <div className="flex items-center gap-4">
           <Link
             href="/posts/new"
-            className="hidden md:flex items-center gap-2 px-4 py-2 rounded-lg text-primary hover:bg-surface-container transition-all text-sm font-medium"
-          >
-            <Sparkles size={16} />
-            Generate with AI
-          </Link>
-          <Link
-            href="/posts/new"
             className="flex items-center gap-2 px-5 py-2 rounded-lg bg-gradient-to-br from-primary to-primary-container text-on-primary shadow-sm font-semibold text-sm hover:opacity-90 transition-opacity"
           >
             <PenSquare size={15} />
             Write New Post
           </Link>
 
-          <div className="h-6 w-px bg-outline-variant/20" />
-
-          <button className="relative p-1.5 text-on-surface-variant hover:text-on-surface transition-colors">
-            <Bell size={20} />
-            <span className="absolute top-0.5 right-0.5 w-2 h-2 bg-error rounded-full ring-2 ring-surface" />
-          </button>
-
-          <div className="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container font-bold text-sm cursor-pointer">
+          <div className="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container font-bold text-sm">
             P
           </div>
+          <button
+            onClick={() => setShowLogoutConfirm(true)}
+            className="p-2 rounded-lg text-on-surface-variant hover:text-error hover:bg-surface-container transition-all"
+            title="Sign out"
+          >
+            <LogOut size={16} />
+          </button>
         </div>
       </div>
+
+      {/* Logout Confirmation Dropdown */}
+      {showLogoutConfirm && (
+        <div className="absolute top-20 right-8 bg-surface-container rounded-xl p-4 shadow-lg z-50 w-72">
+          <div className="flex items-start gap-3 mb-4">
+            <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-error/20 flex items-center justify-center">
+              <AlertCircle size={20} className="text-error" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-sm font-bold text-on-surface">Sign Out?</h3>
+              <p className="text-xs text-on-surface-variant mt-1">
+                Are you sure you want to sign out from your workspace?
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowLogoutConfirm(false)}
+              className="flex-1 px-3 py-2 rounded-lg border border-outline-variant text-on-surface hover:bg-surface-container-high transition-colors font-semibold text-xs"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={confirmLogout}
+              disabled={isLoggingOut}
+              className="flex-1 px-3 py-2 rounded-lg bg-error text-on-error hover:opacity-90 disabled:opacity-60 transition-all font-semibold text-xs"
+            >
+              {isLoggingOut ? "Signing out..." : "Sign Out"}
+            </button>
+          </div>
+        </div>
+      )}
     </header>
   );
 }

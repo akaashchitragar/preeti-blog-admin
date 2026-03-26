@@ -2,22 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  FileText,
-  Image,
-  Settings,
-  BookOpen,
-} from "lucide-react";
+import { FileText, PenSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navLinks = [
   { label: "Posts", href: "/posts", icon: FileText },
   { label: "New Post", href: "/posts/new", icon: PenSquare },
-  { label: "Media", href: "/media", icon: Image },
-];
-
-const bottomLinks = [
-  { label: "Settings", href: "/settings", icon: Settings },
 ];
 
 export default function Sidebar() {
@@ -28,9 +18,7 @@ export default function Sidebar() {
       {/* Logo */}
       <div className="mb-12 flex items-center px-6 w-full">
         <div className="min-w-[32px] h-10 flex items-center justify-center">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary-container flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-            <BookOpen size={16} />
-          </div>
+          <img src="/favicon.ico" alt="Preeti Admin" className="w-8 h-8 rounded-lg flex-shrink-0" />
         </div>
         <div className="opacity-100 ml-4 whitespace-nowrap overflow-hidden">
           <h1 className="text-sm font-bold text-on-surface uppercase tracking-widest leading-tight">
@@ -69,28 +57,6 @@ export default function Sidebar() {
           );
         })}
 
-        <div className="pt-6 mt-6 border-t border-outline-variant/20">
-          {bottomLinks.map(({ label, href, icon: Icon }) => {
-            const isActive = pathname === href;
-            return (
-              <Link
-                key={href}
-                href={href}
-                className={cn(
-                  "flex items-center w-full h-11 px-3 rounded-lg transition-all duration-150",
-                  isActive
-                    ? "text-primary font-semibold bg-surface-container-high"
-                    : "text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high"
-                )}
-              >
-                <Icon size={20} className="min-w-[20px]" />
-                <span className="ml-3 opacity-100 text-sm whitespace-nowrap">
-                  {label}
-                </span>
-              </Link>
-            );
-          })}
-        </div>
       </nav>
     </aside>
   );

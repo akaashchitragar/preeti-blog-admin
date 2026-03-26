@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback } from "react";
 import dynamic from "next/dynamic";
 import AiToolsPanel from "./ai-tools-panel";
 import { slugify, estimateReadingTime } from "@/lib/utils";
@@ -56,25 +56,10 @@ export default function PostEditorClient({ initialData }: PostEditorClientProps)
   const [status, setStatus] = useState<"draft" | "published">(
     initialData?.status ?? "draft"
   );
-  const [featured, setFeatured] = useState(initialData?.featured ?? false);
   const [saving, setSaving] = useState(false);
-  const inlineImageQueue = useRef<string[]>([]);
 
   const handleContentChange = useCallback((val: string) => {
     setContent(val);
-  }, []);
-
-  // AI generates JSON blocks string, set as new content
-  const handleAiContent = useCallback((newContent: string) => {
-    setContent(newContent);
-  }, []);
-
-  // Inline image: queue it; BlockEditor will pick up on next render
-  const handleInlineImage = useCallback((url: string) => {
-    inlineImageQueue.current.push(url);
-    // We insert as a BlockNote image block by updating content
-    // This is a simplified approach — in production, use editor.insertBlocks
-    alert(`Image generated: ${url}\nUse the URL to insert manually into the editor.`);
   }, []);
 
   async function save(overrideStatus?: "draft" | "published") {
@@ -93,7 +78,6 @@ export default function PostEditorClient({ initialData }: PostEditorClientProps)
       coverImage,
       category,
       status: overrideStatus ?? status,
-      featured,
       readingTime,
       excerpt: extractExcerpt(content),
     };
@@ -125,9 +109,9 @@ export default function PostEditorClient({ initialData }: PostEditorClientProps)
   }
 
   return (
-    <div className="p-8 max-w-[1440px] mx-auto grid grid-cols-12 gap-8">
-      {/* Editor — left 65% */}
-      <div className="col-span-12 lg:col-span-8 space-y-6">
+    <div className="p-8 max-w-[1600px] mx-auto grid grid-cols-12 gap-8">
+      {/* Editor — left 70% */}
+      <div className="col-span-12 lg:col-span-9 space-y-6">
         <div className="bg-surface-container-lowest rounded-xl p-8 min-h-[700px]">
           {/* Title */}
           <div className="mb-8">
@@ -148,22 +132,18 @@ export default function PostEditorClient({ initialData }: PostEditorClientProps)
         </div>
       </div>
 
-      {/* Tools panel — right 35% */}
-      <div className="col-span-12 lg:col-span-4">
+      {/* Tools panel — right 30% */}
+      <div className="col-span-12 lg:col-span-3">
         <AiToolsPanel
-          onAiContent={handleAiContent}
           onCoverImage={setCoverImage}
-          onInlineImage={handleInlineImage}
           coverImage={coverImage}
           onStatusChange={setStatus}
           onCategoryChange={setCategory}
-          onFeaturedChange={setFeatured}
           onPublish={() => save("published")}
           onSaveDraft={() => save("draft")}
           saving={saving}
           status={status}
           category={category}
-          featured={featured}
         />
       </div>
     </div>

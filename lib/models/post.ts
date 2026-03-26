@@ -11,7 +11,6 @@ export interface IPost {
   tags: string[];
   publishedAt: Date;
   readingTime: number;
-  featured: boolean;
   status: "draft" | "published";
   views: number;
 }
@@ -27,11 +26,14 @@ const PostSchema = new Schema<IPost>(
     tags:        { type: [String], default: [] },
     publishedAt: { type: Date, default: Date.now },
     readingTime: { type: Number, default: 5 },
-    featured:    { type: Boolean, default: false },
     status:      { type: String, enum: ["draft", "published"], default: "draft" },
     views:       { type: Number, default: 0 },
   },
   { timestamps: true }
 );
+
+PostSchema.index({ createdAt: -1 });
+PostSchema.index({ category: 1 });
+PostSchema.index({ status: 1 });
 
 export const Post = models.Post ?? model<IPost>("Post", PostSchema);

@@ -3,7 +3,6 @@
 import {
   useReactTable,
   getCoreRowModel,
-  getFilteredRowModel,
   getSortedRowModel,
   getPaginationRowModel,
   flexRender,
@@ -37,6 +36,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const helper = createColumnHelper<IPost>();
 
@@ -51,6 +57,7 @@ const CATEGORY_OPTIONS = [
   "Mindfulness",
   "Culture",
   "Personal",
+  "Stories",
 ];
 
 interface PostsDataTableProps {
@@ -60,10 +67,10 @@ interface PostsDataTableProps {
 
 export default function PostsDataTable({ posts, showPagination = true }: PostsDataTableProps) {
   const router = useRouter();
-  const [data, setData] = useState<IPost[]>(posts);
+  const [data] = useState<IPost[]>(posts);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [globalFilter, setGlobalFilter] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -76,7 +83,6 @@ export default function PostsDataTable({ posts, showPagination = true }: PostsDa
     try {
       const res = await fetch(`/api/posts/${pendingDelete.slug}`, { method: "DELETE" });
       if (res.ok) {
-        setData((prev) => prev.filter((p) => p._id !== pendingDelete._id));
         startTransition(() => router.refresh());
       }
     } finally {
@@ -166,17 +172,20 @@ export default function PostsDataTable({ posts, showPagination = true }: PostsDa
       cell: ({ row }) => {
         const post = row.original;
         return (
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
             <Link
               href={`/posts/${post.slug}/edit`}
-              className="p-2 rounded-lg text-on-surface-variant hover:text-primary hover:bg-white transition-all"
+              className="p-2 rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container transition-all cursor-pointer active:scale-95"
             >
               <Edit size={15} />
             </Link>
             <button
-              onClick={() => setPendingDelete(post)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setPendingDelete(post);
+              }}
               disabled={deletingId === post._id}
-              className="p-2 rounded-lg text-on-surface-variant hover:text-error hover:bg-white transition-all disabled:opacity-40"
+              className="p-2 rounded-lg text-on-surface-variant hover:text-error hover:bg-surface-container transition-all disabled:opacity-40 cursor-pointer active:scale-95"
             >
               <Trash2 size={15} />
             </button>
@@ -186,22 +195,21 @@ export default function PostsDataTable({ posts, showPagination = true }: PostsDa
     }),
   ];
 
-  // Apply status + category filters on top of globalFilter
+  const q = searchQuery.toLowerCase();
   const filteredData = data.filter((p) => {
     if (statusFilter !== "All" && p.status !== statusFilter) return false;
     if (categoryFilter !== "All" && p.category !== categoryFilter) return false;
+    if (q && !p.title.toLowerCase().includes(q) && !p.category.toLowerCase().includes(q)) return false;
     return true;
   });
 
   const table = useReactTable({
     data: filteredData,
     columns,
-    state: { sorting, columnFilters, globalFilter },
+    state: { sorting, columnFilters },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
-    onGlobalFilterChange: setGlobalFilter,
     getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     initialState: { pagination: { pageSize: 10 } },
@@ -215,26 +223,32 @@ export default function PostsDataTable({ posts, showPagination = true }: PostsDa
         <div className="flex-1 min-w-[200px] relative">
           <Search size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant" />
           <input
-            value={globalFilter}
-            onChange={(e) => setGlobalFilter(e.target.value)}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 bg-surface-container-lowest border-none rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-on-surface-variant/60"
             placeholder="Search posts..."
           />
         </div>
-        <select
-          value={categoryFilter}
-          onChange={(e) => setCategoryFilter(e.target.value)}
-          className="bg-surface-container-lowest border-none rounded-xl text-xs font-bold uppercase tracking-wider py-2.5 px-4 focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
-        >
-          {CATEGORY_OPTIONS.map((c) => <option key={c}>{c}</option>)}
-        </select>
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="bg-surface-container-lowest border-none rounded-xl text-xs font-bold uppercase tracking-wider py-2.5 px-4 focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
-        >
-          {STATUS_OPTIONS.map((s) => <option key={s}>{s}</option>)}
-        </select>
+        <Select value={categoryFilter} onValueChange={(val) => val && setCategoryFilter(val)}>
+          <SelectTrigger className="w-auto bg-surface-container-lowest border-outline-variant/20 rounded-xl text-xs font-bold uppercase tracking-wider">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {CATEGORY_OPTIONS.map((c) => (
+              <SelectItem key={c} value={c}>{c}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={statusFilter} onValueChange={(val) => val && setStatusFilter(val)}>
+          <SelectTrigger className="w-auto bg-surface-container-lowest border-outline-variant/20 rounded-xl text-xs font-bold uppercase tracking-wider">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {STATUS_OPTIONS.map((s) => (
+              <SelectItem key={s} value={s}>{s}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <span className="text-xs text-on-surface-variant ml-auto">
           {table.getFilteredRowModel().rows.length} posts
         </span>
